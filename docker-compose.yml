@@ -25,10 +25,6 @@ services:
       options:
         max-size: "200k"
         max-file: "10"  
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
     deploy:
       resources:
         limits:
