@@ -14,7 +14,7 @@ services:
     networks:
       - backend
     volumes:
-      - ${PWD}/data/db/moo.db:/home/moo/lambdamoo/moo.db
+      - ./data/db/moo.db:/home/moo/lambdamoo/moo.db
     healthcheck:
       # test: curl -f http://localhost:7777 || exit 1
       test: netstat -ltn | grep -c 7777 || exit 1
