@@ -1,18 +1,21 @@
 version: "3.6"
 services:
 
-  lambdamoo:
-    container_name: lambdamoo
+  moo:
+    container_name: moo
     image: lambdamoo
     build:
       context: .
       dockerfile: Dockerfile
       args:
         ENVIRONMENT: production
-    ports:
-      - "7777:7777"
+    hostname: moo
     networks:
-      - backend
+      - moo-backend
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    stop_signal: SIGKILL
+    restart: always
     healthcheck:
       # test: curl -f http://localhost:7777 || exit 1
       test: netstat -ltn | grep -c 7777 || exit 1
@@ -23,47 +26,66 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "200k"
-        max-file: "10"  
+        max-size: "50m"
+        max-file: "3"  
     deploy:
       resources:
         limits:
           memory: 1g
-
-  nginx:
-    container_name: nginx
-    image: nginx:1.15-alpine
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - "lambdamoo"
-    networks:
-      - frontend
-      - backend
     volumes:
-      - ./data/nginx:/etc/nginx/conf.d
-      - ./data/certbot/conf:/etc/letsencrypt
-      - ./data/certbot/www:/var/www/certbot
+      - ./data/moo/moo.db:/home/moo/lambdamoo/moo.db
 
-  certbot:
-    container_name: certbot
+  moo-proxy:
+    container_name: moo-proxy
+    image: haproxytech/haproxy-alpine:2.4
+    hostname: moo-proxy
+    ports:
+      # - "80:80"
+      # - "443:443"
+      - 17777:17777
+      - 17778:17778
+    depends_on:
+      - "moo"
+    networks:
+      - moo-frontend
+      - moo-backend
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    stop_signal: SIGKILL
+    restart: always
+    healthcheck:
+      test: curl -f http://localhost:17777 || exit 1
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ./data/proxy:/usr/local/etc/haproxy
+      # - ./data/certbot/conf:/etc/letsencrypt
+      # - ./data/certbot/www:/var/www/certbot
+
+  moo-certs:
+    container_name: moo-certs
     image: certbot/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    hostname: moo-certs
     depends_on:
-      - "lambdamoo"
-      - "nginx"
+      - "moo"
+      - "moo-proxy"
     networks:
-      - backend
+      - moo-frontend
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    stop_signal: SIGKILL
+    restart: always
     volumes:
       - ./data/certbot/conf:/etc/letsencrypt
       - ./data/certbot/www:/var/www/certbot    
 
 networks:
-  frontend:
-    name: frontend
+  moo-frontend:
+    name: moo-frontend
     driver: bridge
-  backend:
-    name: backend
+  moo-backend:
+    name: moo-backend
     driver: bridge
