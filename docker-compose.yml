@@ -42,8 +42,8 @@ services:
     ports:
       # - "80:80"
       # - "443:443"
-      - 17777:17777
-      - 17778:17778
+      - 7777:7777
+      - 7778:7778
     depends_on:
       - "moo"
     networks:
@@ -54,7 +54,7 @@ services:
     stop_signal: SIGKILL
     restart: always
     healthcheck:
-      test: curl -f http://localhost:17777 || exit 1
+      test: curl -f http://localhost:7777 || exit 1
       interval: 1m30s
       timeout: 10s
       retries: 3
