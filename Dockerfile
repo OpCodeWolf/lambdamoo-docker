@@ -56,7 +56,7 @@ USER $USERNAME
 WORKDIR $USERHOME
 # Clone Repositories
 RUN git clone https://github.com/lisdude/toaststunt.git toaststunt
-RUN git clone https://github.com/lisdude/toastcore.git toastcore
+# RUN git clone https://github.com/lisdude/toastcore.git toastcore
 
 ###
 # Compile the source
@@ -75,8 +75,8 @@ RUN chmod +x moo
 WORKDIR ${APPHOME}
 # Change the executable name to the desierd application name
 RUN cp $USERHOME/toaststunt/moo moo
-RUN cp $USERHOME/toaststunt/restart.sh start.sh
-RUN cp $USERHOME/toastcore/toastcore.db moo.db
+# RUN cp $USERHOME/toaststunt/restart.sh start.sh
+# RUN cp $USERHOME/toastcore/toastcore.db moo.db
 
 ###
 # Cleanup development dependencies
